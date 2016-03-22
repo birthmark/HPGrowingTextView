@@ -30,7 +30,7 @@
 @class HPGrowingTextView;
 @class HPTextViewInternal;
 
-@protocol HPGrowingTextViewDelegate
+@protocol HPGrowingTextViewDelegate <NSObject>
 
 @optional
 - (BOOL)growingTextViewShouldBeginEditing:(HPGrowingTextView *)growingTextView;
@@ -62,11 +62,8 @@
 	BOOL animateHeightChange;
 	
 	//uitextview properties
-	NSObject <HPGrowingTextViewDelegate> *delegate;
 	NSString *text;
-	UIFont *font;
-	UIColor *textColor;
-	UITextAlignment textAlignment; 
+	NSTextAlignment textAlignment;
 	NSRange selectedRange;
 	BOOL editable;
 	UIDataDetectorTypes dataDetectorTypes;
@@ -79,20 +76,21 @@
 @property int maxNumberOfLines;
 @property int minNumberOfLines;
 @property BOOL animateHeightChange;
-@property (retain) UITextView *internalTextView;	
+@property (nonatomic,strong) UITextView *internalTextView;
 
 
 //uitextview properties
-@property(assign) NSObject<HPGrowingTextViewDelegate> *delegate;
-@property(nonatomic,assign) NSString *text;
-@property(nonatomic,assign) UIFont *font;
-@property(nonatomic,assign) UIColor *textColor;
-@property(nonatomic) UITextAlignment textAlignment;    // default is UITextAlignmentLeft
+@property(weak) id<HPGrowingTextViewDelegate> delegate;
+@property(nonatomic,strong) NSString *text;
+@property(nonatomic,strong) UIFont *font;
+@property(nonatomic,strong) UIColor *textColor;
+@property(nonatomic) NSTextAlignment textAlignment;    // default is UITextAlignmentLeft
 @property(nonatomic) NSRange selectedRange;            // only ranges of length 0 are supported
 @property(nonatomic,getter=isEditable) BOOL editable;
 @property(nonatomic) UIDataDetectorTypes dataDetectorTypes __OSX_AVAILABLE_STARTING(__MAC_NA, __IPHONE_3_0);
 @property (nonatomic) UIReturnKeyType returnKeyType;
 @property (assign) UIEdgeInsets contentInset;
+@property (nonatomic,copy) NSString *placeholder;
 
 //uitextview methods
 //need others? use .internalTextView

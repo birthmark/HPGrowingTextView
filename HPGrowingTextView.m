@@ -28,7 +28,11 @@
 #import "HPGrowingTextView.h"
 #import "HPTextViewInternal.h"
 
-@interface HPGrowingTextView(private)
+@interface HPGrowingTextView()
+{
+    UILabel *placeholderLabel;
+}
+
 -(void)commonInitialiser;
 -(void)resizeTextView:(NSInteger)newSizeH;
 -(void)growDidStop;
@@ -46,6 +50,13 @@
 @synthesize dataDetectorTypes; 
 @synthesize animateHeightChange;
 @synthesize returnKeyType;
+@synthesize placeholder;
+
+- (void)setPlaceholder:(NSString *)placeholders
+{
+    placeholder = placeholders;
+    placeholderLabel.text = placeholders;
+}
 
 // having initwithcoder allows us to use HPGrowingTextView in a Nib. -- aob, 9/2011
 - (id)initWithCoder:(NSCoder *)aDecoder
@@ -59,6 +70,18 @@
 - (id)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
         [self commonInitialiser];
+        
+        /* set placeholder */
+        CGRect rect = internalTextView.frame;
+        rect.origin.y += 0;
+        rect.origin.x += 10;
+        
+        placeholderLabel = [[UILabel alloc]initWithFrame:rect];
+        placeholderLabel.text = @"输入文字信息";
+        placeholderLabel.font = kAppFont6;
+        placeholderLabel.backgroundColor = [UIColor clearColor];
+        placeholderLabel.textColor = kAppColor3;
+        [internalTextView addSubview:placeholderLabel];
     }
     return self;
 }
@@ -71,10 +94,10 @@
     r.origin.x = 0;
     internalTextView = [[HPTextViewInternal alloc] initWithFrame:r];
     internalTextView.delegate = self;
-    internalTextView.scrollEnabled = NO;
-    internalTextView.font = [UIFont fontWithName:@"Helvetica" size:13]; 
+    internalTextView.font = kAppFont6;
     internalTextView.contentInset = UIEdgeInsetsZero;		
     internalTextView.showsHorizontalScrollIndicator = NO;
+    internalTextView.showsVerticalScrollIndicator = NO;
     internalTextView.text = @"-";
     [self addSubview:internalTextView];
     
@@ -172,10 +195,18 @@
     internalTextView.delegate = nil;
     internalTextView.hidden = YES;
     
-    for (int i = 1; i < m; ++i)
+    for (int i = 1; i < m; ++i) {
         newText = [newText stringByAppendingString:@"\n|W|"];
+    }
     
-    internalTextView.text = newText;
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.lineSpacing = 5;// 字体的行间距
+    NSDictionary *attributes = @{
+                                 NSFontAttributeName:kAppFont6,
+                                 NSParagraphStyleAttributeName:paragraphStyle
+                                 };
+    
+    internalTextView.attributedText = [[NSAttributedString alloc] initWithString:newText attributes:attributes];
     
     minHeight = internalTextView.contentSize.height;
     
@@ -195,10 +226,18 @@
 
 
 - (void)textViewDidChange:(UITextView *)textView
-{	
+{
+    if(textView.text.length == 0) {
+        placeholderLabel.alpha = 1.0;
+    } else {
+        placeholderLabel.alpha = 0.0;
+    }
+    
 	//size of content, so we can set the frame of self
 	NSInteger newSizeH = internalTextView.contentSize.height;
-	if(newSizeH < minHeight || !internalTextView.hasText) newSizeH = minHeight; //not smalles than minHeight
+	if(newSizeH < minHeight || !internalTextView.hasText) {
+        newSizeH = minHeight; //not smalles than minHeight
+    }
     
 	if (internalTextView.frame.size.height != newSizeH)
 	{
@@ -253,16 +292,16 @@
         // if our new height is greater than the maxHeight
         // sets not set the height or move things
         // around and enable scrolling
-		if (newSizeH >= maxHeight)
-		{
-			if(!internalTextView.scrollEnabled){
-				internalTextView.scrollEnabled = YES;
-				[internalTextView flashScrollIndicators];
-			}
-			
-		} else {
-			internalTextView.scrollEnabled = NO;
-		}
+//		if (newSizeH >= maxHeight)
+//		{
+//			if(!internalTextView.scrollEnabled){
+//				internalTextView.scrollEnabled = YES;
+//				[internalTextView flashScrollIndicators];
+//			}
+//			
+//		} else {
+//			internalTextView.scrollEnabled = NO;
+//		}
 		
 	}
 	
@@ -315,12 +354,6 @@
 	return [internalTextView resignFirstResponder];
 }
 
-- (void)dealloc {
-	[internalTextView release];
-    [super dealloc];
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark UITextView properties
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -367,12 +400,12 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
--(void)setTextAlignment:(UITextAlignment)aligment
+-(void)setTextAlignment:(NSTextAlignment)aligment
 {
 	internalTextView.textAlignment = aligment;
 }
 
--(UITextAlignment)textAlignment
+-(NSTextAlignment)textAlignment
 {
 	return internalTextView.textAlignment;
 }
